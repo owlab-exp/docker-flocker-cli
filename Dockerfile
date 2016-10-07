@@ -1,7 +1,8 @@
-FROM alpine:3.4
+FROM owlab/alpine-su-exec:3.4-0.2
 MAINTAINER Hun Jae Lee <hunjae.lee@gmail.com>
 
-RUN apk add --update --no-cache gcc libffi-dev openssl-dev python python-dev py-virtualenv \
+RUN apk add --update --no-cache python py-virtualenv 
+RUN apk add --no-cache --virtual build-deps gcc libffi-dev openssl-dev python-dev \
 # To avoid upcoming errors at the last flocker install phase!
     linux-headers musl-dev g++ ca-certificates \
     && update-ca-certificates \
@@ -12,11 +13,13 @@ RUN apk add --update --no-cache gcc libffi-dev openssl-dev python python-dev py-
     && pip install https://clusterhq-archive.s3.amazonaws.com/python/Flocker-1.15.0-py2-none-any.whl \
     && rm -rf ~/.cache/pip \
 # Uninstall unneeded packages
-    && apk del gcc libffi-dev openssl-dev python-dev linux-headers musl-dev g++
-
+    && apk del build-deps \
 # To make start script
-RUN echo "#!/bin/sh" > /usr/local/bin/entrypoint.sh \
-    && echo "source /flocker-client/bin/activate && flocker-ca \$@" >> /usr/local/bin/entrypoint.sh \
+    && echo "#!/bin/sh" > /usr/local/bin/entrypoint.sh \
+    && echo "USER_ID=\${LOCAL_USER_ID:-9001}" >> /usr/local/bin/entrypoint.sh \
+    && echo "adduser -D -u \$USER_ID -g \"\" user " >> /usr/local/bin/entrypoint.sh \
+    && echo "chown user /flockercerts " >> /usr/local/bin/entrypoint.sh \
+    && echo "source /flocker-client/bin/activate && su-exec user flocker-ca \$@" >> /usr/local/bin/entrypoint.sh \
     && chmod 755 /usr/local/bin/entrypoint.sh \
     && mkdir flockercerts
 
