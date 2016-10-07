@@ -10,6 +10,6 @@ To see version of the flocker client.
 
 To make a cluster cert.
 ```
-# docker run -it --rm -v $PWD/flockercerts -u $(id -u) owlab/flocker-ca initialize first-cluster
+# docker run -it --rm -v $PWD:/flockercerts -u $(id -u) owlab/flocker-ca initialize first-cluster
 ```
-The **-u** option is to make the resulting files readable by you. Or files's owner will be root.
+The **-u** option is to make the resulting files owned by you, or its owner will be **root**.
